@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Training Calendar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600&display=swap" rel="stylesheet">
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:720px;margin:0 auto;padding:20px 16px 32px;background:#F5F3EE;color:#1f1e1d;zoom:1.2}
+body.lang-cn{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif}
+body.lang-jp{font-family:"Noto Sans JP","Hiragino Sans","Yu Gothic UI","Yu Gothic","Meiryo",sans-serif}
+h1{font-family:Georgia,"Times New Roman",serif;font-size:26px;font-weight:600;margin:0;letter-spacing:.2px}
+h2{font-family:Georgia,serif;font-size:18px;font-weight:600;margin:18px 0 6px}
+body.lang-cn h1,body.lang-cn h2,body.lang-cn #mtitle{font-family:Georgia,"Songti SC","SimSun",serif}
+body.lang-jp h1,body.lang-jp h2,body.lang-jp #mtitle{font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Sans JP",serif}
+.sub{color:#8a857b;font-size:13px;margin:4px 0 18px}
+.sub a{color:#C96442;text-decoration:none}
+.sub a:hover{text-decoration:underline}
+button{font:inherit;font-size:14px;padding:8px 12px;border:1px solid #ddd8cc;border-radius:9px;background:#fff;cursor:pointer;color:#1f1e1d;transition:background .15s,border-color .15s,color .15s}
+button:hover{background:#efece4;border-color:#c9c3b4}
+button.active{background:#C96442;color:#fff;border-color:#C96442}
+button.pclosed{background:#faf3ef;color:#C96442;border-color:#C96442}
+button.pclosed:hover{background:#f5e8e1}
+button.popen{background:#1f1e1d;color:#fff;border-color:#1f1e1d}
+button.popen:hover{background:#3a3835;border-color:#3a3835}
+input,select{font:inherit;font-size:14px;padding:9px;border:1px solid #ddd8cc;border-radius:9px;background:#fff;box-sizing:border-box;color:#1f1e1d}
+input:focus,select:focus{outline:none;border-color:#C96442;box-shadow:0 0 0 3px rgba(201,100,66,.15)}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.nav{display:flex;align-items:center;justify-content:space-between;margin:6px 0 12px}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-bottom:10px}
+.wd{text-align:center;font-size:12px;color:#8a857b;padding:2px 0;letter-spacing:.5px}
+.cell{aspect-ratio:4/3;border-radius:10px;padding:4px 3px;cursor:pointer;border:1px solid #e8e4da;background:#fff;transition:border-color .15s}
+.cell:hover{border-color:#c9c3b4}
+.cell.sel{border-color:#C96442;background:#faf3ef}
+.dnum{font-size:11px;text-align:center;margin-bottom:2px;color:#8a857b}
+.dnum.today{color:#C96442;font-weight:600}
+.dots{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;align-items:center}
+.dot{border-radius:50%;opacity:.7;transition:opacity .15s,transform .15s;display:inline-block}
+.dot:hover{opacity:1;transform:scale(1.06)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#5f5b52}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block;opacity:.85}
+.card{background:#fff;border:1px solid #e8e4da;border-radius:14px;padding:18px;margin:0 0 18px}
+.cardtitle{font-weight:600;font-size:14px;margin:0 0 12px;letter-spacing:.2px}
+.row{display:flex;gap:8px;margin-bottom:8px}
+.row>*{flex:1;min-width:0}
+.entry{display:flex;align-items:center;gap:9px;padding:9px 4px;border-top:1px solid #eeeae0;font-size:14px}
+.entry i{width:12px;height:12px;border-radius:50%;flex:none;display:inline-block;opacity:.85}
+.muted{color:#8a857b;font-size:13px}
+.err{color:#a32d2d;font-size:12px;margin:6px 0 0}
+.primary{background:#C96442;color:#fff;border-color:#C96442}
+.primary:hover{background:#b5583a;border-color:#b5583a}
+.bars{display:flex;align-items:flex-end;gap:2px;height:170px;margin-top:12px}
+.bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
+.bar div{width:100%;opacity:.85;transition:opacity .15s}
+.bar:hover div{opacity:1}
+.xlabels{display:flex;gap:2px;margin-top:5px}
+.xlabels span{flex:1;font-size:10px;color:#8a857b;text-align:center;overflow:hidden;white-space:nowrap}
+#tip{position:absolute;display:none;background:#2c2a26;color:#f5f3ee;font-size:12px;line-height:1.5;padding:8px 11px;border-radius:8px;max-width:260px;white-space:pre-line;pointer-events:none;z-index:99;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.setrow{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid #eeeae0;font-size:14px;flex-wrap:wrap}
+.setrow input[type=number]{width:76px;padding:6px}
+.setrow input[type=text]{flex:1;min-width:120px;padding:6px}
+.setrow .small{font-size:12px;padding:5px 9px}
+.archived{opacity:.45}
+.tag{font-size:11px;color:#8a857b;border:1px solid #ddd8cc;border-radius:6px;padding:1px 6px}
+.reftable{width:100%;font-size:13px;border-collapse:collapse;margin-top:8px}
+.reftable td{padding:4px 6px;border-top:1px solid #eeeae0}
+.reftable td:last-child{text-align:right;color:#5f5b52}
+.swatches{display:inline-flex;gap:5px;align-items:center;flex:none}
+.sw{width:18px;height:18px;border-radius:50%;cursor:pointer;opacity:.55;border:2px solid transparent;box-sizing:border-box}
+.sw.on{opacity:1;border-color:#1f1e1d}
+#about p{font-size:14px;line-height:1.7;margin:0 0 10px}
+.cell:focus-visible,.dot:focus-visible,.bar:focus-visible{outline:3px solid rgba(201,100,66,.35);outline-offset:2px}
+.dot[role=button]{cursor:pointer}
+.entryactions{display:flex;gap:6px;flex:none}
+.entryactions button{width:auto;padding:6px 9px}
+.detailfilter{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0 8px;padding:8px 10px;background:#faf3ef;border:1px solid #ead4ca;border-radius:9px;font-size:12px}
+.undo{display:none;align-items:center;justify-content:space-between;gap:10px;margin:0 0 14px;padding:10px 12px;background:#2c2a26;color:#f5f3ee;border-radius:10px;font-size:13px}
+.undo button{padding:5px 10px}
+.status{min-height:18px;margin:6px 0 0}
+@media (max-width:560px){
+body{zoom:1;padding:12px 8px 24px}
+.card{padding:12px}
+.grid{gap:3px}
+.cell{aspect-ratio:1/1;border-radius:7px;padding:2px 1px}
+.dnum{font-size:10px;margin-bottom:1px}
+.dots{gap:2px}
+.topbar{flex-wrap:wrap}
+.bars{height:120px}
+#tip{max-width:200px}
+.setrow input[type=text]{min-width:90px}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+<div>
+<h1 id="apptitle"></h1>
+<p class="sub"><span id="appsub"></span> <a href="#" id="aboutlink"></a></p>
+</div>
+<div style="display:flex;gap:8px;flex:none">
+<span id="langbtns" style="display:inline-flex;gap:8px"></span>
+<button id="settingsbtn" class="pclosed"></button>
+</div>
+</div>
+<div class="card" id="about" style="display:none">
+<div id="aboutbody"></div>
+<button id="aboutback" style="margin-top:8px"></button>
+</div>
+<div id="main">
+<div class="card" id="settings" style="display:none">
+<p class="muted" id="l_slots" style="margin:0 0 2px"></p>
+<p class="muted" id="l_slothint" style="margin:0 0 6px;font-size:12px"></p>
+<div id="slotrows" style="margin-bottom:16px"></div>
+<div style="display:flex;gap:6px;margin-bottom:14px">
+<button id="tabdur" class="active" style="font-size:13px;padding:6px 12px"></button>
+<button id="tabreps" style="font-size:13px;padding:6px 12px"></button>
+</div>
+<div id="pane_dur">
+<p class="muted" id="l_catlist" style="margin:0 0 2px"></p>
+<p class="muted" id="l_cathint" style="margin:0 0 6px;font-size:12px"></p>
+<div id="catrows"></div>
+<div class="setrow" style="border-top:none;margin-top:6px">
+<input type="text" id="newcatname">
+<input type="number" id="newcatmult" min="0.5" step="0.5" style="width:76px">
+<span class="muted" id="l_newmult"></span>
+<span class="swatches" id="newcatsw"></span>
+<button class="small" id="newcatadd"></button>
+</div>
+<p class="muted" id="l_refdur" style="margin:18px 0 2px"></p>
+<p class="muted effortnote" style="margin:4px 0 8px;font-size:12px"></p>
+<table class="reftable" id="refdurtable"></table>
+</div>
+<div id="pane_reps" style="display:none">
+<p class="muted" id="l_exlist" style="margin:0 0 2px"></p>
+<p class="muted" id="l_archhint" style="margin:0 0 6px;font-size:12px"></p>
+<div id="exrows"></div>
+<div class="setrow" style="border-top:none;margin-top:6px">
+<input type="text" id="newexname">
+<input type="number" id="newexpts" min="0.05" step="0.05" style="width:76px">
+<span class="muted" id="l_newpts"></span>
+<span class="swatches" id="newexsw"></span>
+<button class="small" id="newexadd"></button>
+</div>
+<p class="muted" id="l_refreps" style="margin:18px 0 2px"></p>
+<p class="muted effortnote" style="margin:4px 0 8px;font-size:12px"></p>
+<table class="reftable" id="refrepstable"></table>
+</div>
+</div>
+<div class="card" id="addcard">
+<p class="cardtitle" id="l_addsession"></p>
+<div class="row"><input type="date" id="fdate"><select id="ftype"></select></div>
+<div id="fields"></div>
+<button id="fadd" class="primary" style="width:100%"></button>
+<button id="fcancel" style="width:100%;margin-top:7px;display:none"></button>
+<p class="err" id="ferr" aria-live="polite"></p>
+</div>
+<div class="nav">
+<button id="prev">&#8592;</button>
+<span id="mtitle" style="font-weight:600;font-size:17px;font-family:Georgia,serif"></span>
+<button id="next">&#8594;</button>
+</div>
+<div class="grid" id="grid"></div>
+<div class="legend" id="legend"></div>
+<p class="muted" id="mtotal"></p>
+<div id="daylist" style="margin:6px 0 18px"></div>
+<div class="card">
+<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+<p class="cardtitle" id="l_volchart" style="margin:0"></p>
+<div style="display:flex;gap:6px">
+<button id="vday" class="active" style="font-size:13px;padding:6px 10px"></button>
+<button id="vweek" style="font-size:13px;padding:6px 10px"></button>
+<button id="vmonth" style="font-size:13px;padding:6px 10px"></button>
+</div>
+</div>
+<p class="muted" id="chartmax" style="margin:10px 0 0"></p>
+<div class="bars" id="bars"></div>
+<div class="xlabels" id="xlabels"></div>
+</div>
+<div id="undo" class="undo" aria-live="polite"><span id="undotext"></span><button id="fundobutton"></button></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button id="freport"></button>
+<button id="fexport"></button>
+<button id="fbackup"></button>
+<button id="fimport"></button>
+<input id="fimportfile" type="file" accept="application/json,.json" style="display:none">
+</div>
+<p class="muted status" id="backupstatus" aria-live="polite"></p>
+</div>
+<div id="tip"></div>
+<script>
+var SLOTC={"red":"#E24B4A","purple":"#7F77DD","blue":"#378ADD","yellow":"#EF9F27","green":"#639922"};
+var SLOTKEYS=["red","blue","yellow","green","purple"];
+var LANGS=["en","cn","jp"];
+var L={
+en:{title:"Training calendar",sub:"Every effort counts. Stick it on. · 1 pt = 1 min at rest (1x)",learnmore:"Click to learn more",back:"← Back",personalize:"Personalize",hide:"Hide",addsession:"Add a session",editSession:"Edit session",stickit:"+ Stick it",savechanges:"Save changes",canceledit:"Cancel edit",edit:"Edit",undo:"Undo",deleted:"Entry deleted",showall:"Show all",filtered:"Showing",err_amt:"Enter a time or rep count",err_noex:"No active exercises — add or unarchive one in Personalize",err_nocat:"No active categories — add or unarchive one in Personalize",t_bw:"Bodyweight",ph_reps:"Reps",ph_time:"Time (min)",ph_noteopt:"Note (optional)",volchart:"Volume chart",vday:"Per day",vweek:"Per week",vmonth:"Per month",tallest:"Tallest bar = ",pts:"pts",total:"total",monthtotal:"Month total: ",noent:" · no entries this day",exportcsv:"Export CSV (with points)",report:"Export report (raw data)",backupjson:"Export complete backup",importjson:"Import backup",confirmimport:"Import this backup and replace the data currently stored in this browser?",importok:"Backup imported successfully.",importerr:"This file is not a valid Training Calendar backup.",weekof:"Week of ",bydur:"By duration",byreps:"By reps",
+catlist:"Your categories (name + intensity + sticker color)",
+cathint:"Everything here is yours to edit. Scores are saved the moment you log an entry, so changing a multiplier only affects new entries. Same color = one sticker per day. Mixed intensities in one session? Make two categories and log two entries.",
+exlist:"Bodyweight exercises (points per rep + sticker color)",
+archhint:"Archive hides an item from the form; its history stays intact. Delete removes it from the menu — old entries keep their saved points and names.",
+newname:"New category name",x:"x",p:"pts",perrep:"rep",add:"Add",archive:"Archive",unarchive:"Unarchive",del:"Delete",archived:"archived",
+refdur:"Reference: common activities (multiplier vs. lying at rest)",refreps:"Reference: common bodyweight moves (pts per rep, average squat = 1)",
+effortnote:"Values are ranges, not single numbers, because the same move costs different people different effort — body size, strength, technique, pace and depth all matter. Pick within the range by honest feel; the defaults sit near the middle.",
+confirmdel:"Delete permanently? Existing entries keep their saved points.",err_dupname:"That name already exists",
+slots:"Sticker colors",slothint:"Name the five stickers however you like; blank = default. Any category can wear any color.",
+wd:["M","T","W","T","F","S","S"],mshort:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+ck:{"red":"Training session","blue":"Running","yellow":"High effort activities","green":"Medium effort activities","purple":"Weight training"},
+about:'<h2>Why this exists</h2><p>Most training apps decide for you what counts as exercise. This one doesn\'t. You define the categories, the intensities, and the colors — no bending your life to fit someone else\'s training menu. The effort that appears on no menu at all, but that you value, deserves a sticker too.</p><h2>How it works</h2><p><b>Points.</b> Everything converts to one simple scale: 1 point = 1 minute lying at rest. A 10x category earns 10 points per minute. The score is saved the moment you log an entry, so changing your settings later never rewrites your history.</p><p><b>What points are.</b> A personal comparison tool — not calories, not a medical measurement. They let very different activities sit on one calendar.</p><p><b>Everyone is different.</b> The same move costs different people different effort, so the reference tables give ranges instead of single numbers. Pick within the range by how hard it honestly feels for you.</p><p><b>Categories.</b> Each has a name, a multiplier, and a color — all editable in Personalize. If one session mixes intensities, make two categories and log two entries.</p><p><b>Stickers.</b> Entries of the same color on one day merge into one dot, and the dot\'s area matches its points: small effort, small dot; big day, big dot. Hover or tap a dot to see what\'s inside.</p><p><b>Bodyweight.</b> Rep-based moves are scored per rep, each with its own editable value. Defaults are calibrated so a full session (10 pull-ups, 50 push-ups, 50 jump squats, 100 sit-ups) = 300 points — the same as 30 minutes at 10x.</p><p><b>Your data.</b> Everything stays in your own browser; nothing is uploaded. CSV exports are for analysis; the complete backup saves records and settings together and can be imported back anytime.</p>'},
+cn:{title:"训练日历",sub:"每一分努力都算数。贴上去。 · 1点 = 静躺1分钟 (1x)",learnmore:"点击了解更多",back:"← 返回",personalize:"个性化",hide:"收起",addsession:"添加一次训练",editSession:"编辑训练记录",stickit:"+ 贴上",savechanges:"保存修改",canceledit:"取消编辑",edit:"编辑",undo:"撤销",deleted:"记录已删除",showall:"显示全部",filtered:"正在显示",err_amt:"请填写时间或次数",err_noex:"没有可用动作——请在个性化里添加或取消归档",err_nocat:"没有可用类别——请在个性化里添加或取消归档",t_bw:"自重",ph_reps:"次数",ph_time:"时间(分钟)",ph_noteopt:"备注(可选)",volchart:"训练量图表",vday:"按日",vweek:"按周",vmonth:"按月",tallest:"最高柱 = ",pts:"点",total:"合计",monthtotal:"本月合计：",noent:" · 这天没有记录",exportcsv:"导出CSV(含点数)",report:"导出报告(原始数据)",backupjson:"导出完整备份",importjson:"导入备份",confirmimport:"导入该备份并替换当前浏览器中保存的数据？",importok:"备份导入成功。",importerr:"该文件不是有效的训练日历备份。",weekof:"周起始 ",bydur:"按时长",byreps:"按个数",
+catlist:"你的类别(名称+强度+贴纸颜色)",
+cathint:"这里的一切都归你编辑。分数在录入那一刻就保存了，之后改倍数只影响新记录。同色 = 每天合并成一个贴纸。一次训练里有不同强度，就建两个类别分开录。",
+exlist:"自重动作(每次点数+贴纸颜色)",
+archhint:"归档只是从表单里隐藏，历史照常保留；删除会把它从菜单移除，旧记录仍保留已保存的点数和名称。",
+newname:"新类别名称",x:"倍",p:"点",perrep:"次",add:"添加",archive:"归档",unarchive:"取消归档",del:"删除",archived:"已归档",
+refdur:"参考：常见活动(相对静躺的倍数)",refreps:"参考：常见自重动作(每次点数，平均深蹲=1)",
+effortnote:"参考值给的是范围而不是单一数字，因为同一个动作对不同人的费力程度不同——体格、力量、技术、速度和动作幅度都有影响。按你真实的体感在范围内选，默认值在中间附近。",
+confirmdel:"确定永久删除？现有记录会保留已保存的点数。",err_dupname:"该名称已存在",
+slots:"贴纸颜色",slothint:"给五种贴纸自由命名，留空用默认名。任何类别可选任何颜色。",
+wd:["一","二","三","四","五","六","日"],mshort:["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],
+ck:{"red":"训练课","blue":"跑步","yellow":"高强度活动","green":"中强度活动","purple":"力量训练"},
+about:'<h2>为什么做这个</h2><p>大多数训练应用替你决定什么算运动，这个网站不这么做。类别、强度、颜色都由你定义，不需要把自己的生活折中成任何现成的训练方案。那些不在任何训练菜单上、但你自己珍视的付出，同样值得一张贴纸。</p><h2>如何使用</h2><p><b>点数。</b>一切换算到同一把简单的尺子：1点 = 静躺1分钟。10x 的类别每分钟得10点。分数在录入那一刻就被保存，之后修改设置不会改写历史。</p><p><b>点数是什么。</b>它是你个人的比较工具——不是卡路里，也不是医学指标。它的作用是让天差地别的活动能放在同一本日历上。</p><p><b>人人不同。</b>同一个动作对不同的人费力程度不同，所以参考表给的是范围而不是单一数字。按你真实的费力感在范围内选就好。</p><p><b>类别。</b>每个类别有名称、倍数和颜色，都在"个性化"里改。一次训练里有不同强度，就建两个类别分开录两条。</p><p><b>贴纸。</b>同一天同色的记录合并成一个圆点，圆点面积和点数成正比：小付出是小点，大日子是大点。悬停或轻点圆点可以看到里面有什么。</p><p><b>自重。</b>按次数计的动作以"每次多少点"计分，每个动作的分值都可以改。默认校准为一整套（10个引体、50个俯卧撑、50个深蹲跳、100个仰卧起坐）等于300点，相当于30分钟的10x活动。</p><p><b>你的数据。</b>全部存在你自己的浏览器里，不会上传。CSV 适合做分析；完整备份把记录和设置存在一起，随时可以导入恢复。</p>'},
+jp:{title:"トレーニングカレンダー",sub:"どんな努力もカウント。貼っていこう。 · 1点 = 安静1分 (1x)",learnmore:"詳しくはこちら",back:"← 戻る",personalize:"カスタマイズ",hide:"閉じる",addsession:"セッションを追加",editSession:"記録を編集",stickit:"+ 貼る",savechanges:"変更を保存",canceledit:"編集をキャンセル",edit:"編集",undo:"元に戻す",deleted:"記録を削除しました",showall:"すべて表示",filtered:"表示中",err_amt:"時間または回数を入力してください",err_noex:"有効な種目がありません——カスタマイズで追加/解除してください",err_nocat:"有効なカテゴリがありません——カスタマイズで追加/解除してください",t_bw:"自重",ph_reps:"回数",ph_time:"時間(分)",ph_noteopt:"メモ(任意)",volchart:"ボリュームチャート",vday:"日別",vweek:"週別",vmonth:"月別",tallest:"最高バー = ",pts:"点",total:"合計",monthtotal:"今月の合計：",noent:" · この日は記録なし",exportcsv:"CSVエクスポート(点数つき)",report:"レポート出力(生データ)",backupjson:"完全バックアップを出力",importjson:"バックアップを読み込む",confirmimport:"このバックアップを読み込み、このブラウザに保存されている現在のデータを置き換えますか？",importok:"バックアップを読み込みました。",importerr:"有効なトレーニングカレンダーのバックアップではありません。",weekof:"週開始 ",bydur:"時間ベース",byreps:"回数ベース",
+catlist:"カテゴリ(名前+強度+ステッカーの色)",
+cathint:"ここはすべて編集できます。点数は記録した時点で保存されるため、倍率の変更は新しい記録にだけ反映されます。同じ色＝1日1つのステッカー。強度が混在するセッションは、カテゴリを2つ作って分けて記録してください。",
+exlist:"自重種目(1回あたりの点数+ステッカーの色)",
+archhint:"アーカイブはフォームから隠すだけで、履歴はそのまま残ります。削除するとメニューから消えますが、過去の記録には保存済みの点数と名前が残ります。",
+newname:"新しいカテゴリ名",x:"倍",p:"点",perrep:"回",add:"追加",archive:"アーカイブ",unarchive:"解除",del:"削除",archived:"アーカイブ済み",
+refdur:"参考：一般的な活動(安静時に対する倍率)",refreps:"参考：一般的な自重種目(1回あたりの点数、平均スクワット=1)",
+effortnote:"参考値は単一の数値ではなく範囲で示しています。同じ動作でも、体格・筋力・技術・速度・可動域によって必要な努力が人それぞれ違うためです。実際の感覚に合わせて範囲内で選んでください。初期値は範囲の中央付近です。",
+confirmdel:"完全に削除しますか？既存の記録には保存済みの点数が残ります。",err_dupname:"その名前は既に存在します",
+slots:"ステッカーの色",slothint:"5つのステッカーに自由に名前を付けられます。空欄ならデフォルト名。どのカテゴリもどの色でも選べます。",
+wd:["月","火","水","木","金","土","日"],mshort:["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],
+ck:{"red":"トレーニング","blue":"ランニング","yellow":"高強度の活動","green":"中強度の活動","purple":"筋力トレーニング"},
+about:'<h2>なぜ作ったか</h2><p>多くのトレーニングアプリは「何が運動か」を勝手に決めます。このサイトは決めません。カテゴリも強度も色も、あなたが定義します。既存のトレーニングメニューに自分を合わせる必要はありません。どのメニューにも載っていない、でもあなたが大切にしている努力にも、ステッカーを。</p><h2>使い方</h2><p><b>点数。</b>すべてを一つのシンプルな尺度に換算します：1点 = 安静に1分。10xのカテゴリは1分につき10点。点数は記録した瞬間に保存されるので、後から設定を変えても過去は書き換わりません。</p><p><b>点数とは。</b>個人的な比較の道具です。カロリーでも医学的な測定でもありません。まったく違う活動を一つのカレンダーに並べるためのものです。</p><p><b>人それぞれ。</b>同じ動作でも必要な努力は人によって違うため、参考表は単一の数値ではなく範囲で示しています。自分の正直な体感に合わせて範囲内で選んでください。</p><p><b>カテゴリ。</b>それぞれに名前・倍率・色があり、「カスタマイズ」で自由に編集できます。強度が混在するセッションはカテゴリを2つ作って2件記録します。</p><p><b>ステッカー。</b>同じ日の同色記録は1つの点にまとまり、面積は点数に比例します。小さな努力は小さく、大きな一日は大きく。ホバーまたはタップで中身が見えます。</p><p><b>自重。</b>回数ベースの種目は1回あたりの点数で計算し、値は自由に編集できます。初期設定ではフルセッション（懸垂10回・腕立て50回・ジャンプスクワット50回・シットアップ100回）＝300点＝10x活動30分ぶんです。</p><p><b>データ。</b>すべてあなたのブラウザ内に保存され、アップロードされません。CSVは分析用、完全バックアップは記録と設定をまとめて保存し、いつでも読み込んで復元できます。</p>'}};
+var EXN={
+cn:{"Pull-up":"引体向上","Band-assisted pull-up":"弹力带辅助引体","Knuckle push-up (hard floor)":"硬地拳卧撑","Push-up":"俯卧撑","Jump squat":"深蹲跳","Squat":"深蹲","Sit-up":"仰卧起坐"},
+jp:{"Pull-up":"懸垂","Band-assisted pull-up":"バンド補助懸垂","Knuckle push-up (hard floor)":"拳立て伏せ(硬い床)","Push-up":"腕立て伏せ","Jump squat":"ジャンプスクワット","Squat":"スクワット","Sit-up":"シットアップ"}};
+var REFDUR=[
+["Casual walking","慢速散步","散歩(ゆっくり)","2.5–3.5x"],
+["Brisk walking","快走","早歩き","4–5.5x"],
+["Hiking","徒步","ハイキング","5–7.5x"],
+["Stair climbing","爬楼梯","階段のぼり","7–9.5x"],
+["Easy running","慢跑","ジョギング","7–9x"],
+["Fast running","快跑","速いランニング","10–12.5x"],
+["Casual cycling","休闲骑行","サイクリング(軽め)","4–6x"],
+["Vigorous cycling","高强度骑行","サイクリング(高強度)","7–10x"],
+["Swimming, leisure","休闲游泳","水泳(レジャー)","5–7x"],
+["Swimming, laps","泳道游泳","水泳(ラップ)","7.5–10x"],
+["Jump rope","跳绳","縄跳び","9–12x"],
+["Yoga / stretching","瑜伽/拉伸","ヨガ/ストレッチ","2–3x"],
+["Pilates","普拉提","ピラティス","2.5–4x"],
+["Dancing","跳舞","ダンス","4–6.5x"],
+["Strength training","力量训练","筋力トレーニング","4–6x"],
+["HIIT","高强度间歇","HIIT","8–11x"],
+["Martial arts / sparring","武术/对抗","武道/スパーリング","8–12x"],
+["Boxing, bag work","拳击打靶/沙袋","ボクシング(ミット/サンドバッグ)","5–8x"],
+["Climbing","攀岩","クライミング","6.5–9x"],
+["Inline skating","轮滑","インラインスケート","6–8.5x"],
+["Basketball","篮球","バスケットボール","5.5–8x"],
+["Tennis / badminton","网球/羽毛球","テニス/バドミントン","5–7.5x"],
+["Housework","家务","家事","2.5–4x"],
+["Gardening","园艺","ガーデニング","3.5–5.5x"]];
+var REFREPS=[
+["Squat","深蹲","スクワット","0.8–1.2"],
+["Lunge","弓步蹲","ランジ","1–1.5"],
+["Sit-up","仰卧起坐","シットアップ","0.6–0.9"],
+["Crunch","卷腹","クランチ","0.5–0.8"],
+["Push-up","俯卧撑","腕立て伏せ","1.4–2.1"],
+["Knuckle push-up, hard floor","硬地拳卧撑","拳立て伏せ(硬い床)","2–3"],
+["Knee push-up","跪姿俯卧撑","膝つき腕立て","0.8–1.2"],
+["Jump squat","深蹲跳","ジャンプスクワット","1.4–2"],
+["Burpee","波比跳","バーピー","3–4.5"],
+["Dip","双杠臂屈伸","ディップス","2.5–3.5"],
+["Band-assisted pull-up","弹力带辅助引体","バンド補助懸垂","3.5–5.5"],
+["Pull-up","标准引体","懸垂","6–9"]];
+var STORE="training_calendar_v1";
+var SETSTORE="training_calendar_settings_v1";
+var BACKUP_VERSION=2;
+var DEFAULTCATS=[
+{n:"Intensive training session",m:10,c:"red",a:false},
+{n:"Normal training session",m:6,c:"red",a:false},
+{n:"Running",m:8,c:"blue",a:false},
+{n:"Other — high effort",m:5,c:"yellow",a:false},
+{n:"Other — low effort",m:3,c:"green",a:false}];
+var DEFAULTEX=[
+{n:"Pull-up",p:7.5,a:false,c:"purple"},
+{n:"Band-assisted pull-up",p:4.5,a:false,c:"purple"},
+{n:"Knuckle push-up (hard floor)",p:2.5,a:false,c:"purple"},
+{n:"Push-up",p:1.5,a:false,c:"purple"},
+{n:"Jump squat",p:1.5,a:false,c:"purple"},
+{n:"Squat",p:1,a:false,c:"purple"},
+{n:"Sit-up",p:0.75,a:false,c:"purple"}];
+var sessions=[],cfg=null;
+try{sessions=JSON.parse(localStorage.getItem(STORE)||"[]");}catch(e){sessions=[];}
+try{cfg=JSON.parse(localStorage.getItem(SETSTORE)||"null");}catch(e){cfg=null;}
+function clone(v){return JSON.parse(JSON.stringify(v));}
+function isNum(v){return typeof v==="number"&&isFinite(v);}
+function uid(prefix){
+if(window.crypto&&typeof window.crypto.randomUUID==="function")return prefix+"_"+window.crypto.randomUUID();
+return prefix+"_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,10);}
+function ensureOrder(arr){var mx=0;arr.forEach(function(x){if(x.o&&x.o>mx)mx=x.o;});arr.forEach(function(x){if(!x.o){mx++;x.o=mx;}});}
+function nextOrder(arr){var mx=0;arr.forEach(function(x){if(x.o&&x.o>mx)mx=x.o;});return mx+1;}
+function ensureIds(arr,prefix){var seen={};arr.forEach(function(x){if(!x.id||seen[x.id])x.id=uid(prefix);seen[x.id]=true;});}
+function ensureConfig(){
+if(!cfg||typeof cfg!=="object")cfg={};
+if(!cfg.lang||LANGS.indexOf(cfg.lang)<0)cfg.lang="en";
+if(!cfg.slots||typeof cfg.slots!=="object")cfg.slots={};
+SLOTKEYS.forEach(function(k){if(!cfg.slots[k]||typeof cfg.slots[k]!=="object")cfg.slots[k]={name:""};if(typeof cfg.slots[k].name!=="string")cfg.slots[k].name="";});
+if(!Array.isArray(cfg.ex))cfg.ex=clone(DEFAULTEX);
+if(!Array.isArray(cfg.cats)){
+var m=cfg.mult;
+if(m){
+cfg.cats=[
+{n:"Intensive training session",m:m.spar,c:"red",a:false},
+{n:"Normal training session",m:m.nonspar,c:"red",a:false},
+{n:"Running",m:m.run,c:"blue",a:false},
+{n:"Other — high effort",m:m.hi,c:"yellow",a:false},
+{n:"Other — low effort",m:m.lo,c:"green",a:false}];
+(cfg.durEx||[]).forEach(function(e){for(var i=0;i<cfg.cats.length;i++){if(cfg.cats[i].n===e.n)return;}cfg.cats.push({n:e.n,m:e.m,c:e.c||"green",a:!!e.a});});
+delete cfg.mult;delete cfg.durEx;
+}else cfg.cats=clone(DEFAULTCATS);
+}
+cfg.cats=cfg.cats.filter(function(c){return c&&typeof c==="object";});
+cfg.ex=cfg.ex.filter(function(e){return e&&typeof e==="object";});
+cfg.cats.forEach(function(c){if(typeof c.n!=="string"||!c.n.trim())c.n="Unnamed category";c.n=c.n.trim();if(!isNum(c.m)||c.m<=0)c.m=1;if(SLOTKEYS.indexOf(c.c)<0)c.c="green";c.a=!!c.a;});
+cfg.ex.forEach(function(e){if(typeof e.n!=="string"||!e.n.trim())e.n="Unnamed exercise";e.n=e.n.trim();if(!isNum(e.p)||e.p<=0)e.p=1;if(SLOTKEYS.indexOf(e.c)<0)e.c="purple";e.a=!!e.a;});
+ensureIds(cfg.cats,"cat");ensureIds(cfg.ex,"ex");ensureOrder(cfg.cats);ensureOrder(cfg.ex);
+}
+function sortList(arr,valKey){arr.sort(function(a,b){if((a.a?1:0)!==(b.a?1:0))return (a.a?1:0)-(b.a?1:0);var ca=SLOTKEYS.indexOf(a.c),cb=SLOTKEYS.indexOf(b.c);if(ca!==cb)return ca-cb;if(a[valKey]!==b[valKey])return b[valKey]-a[valKey];return a.o-b.o;});}
+function resortCats(){ensureOrder(cfg.cats);sortList(cfg.cats,"m");}
+function resortEx(){ensureOrder(cfg.ex);sortList(cfg.ex,"p");}
+function catById(id){for(var i=0;i<cfg.cats.length;i++)if(cfg.cats[i].id===id)return cfg.cats[i];return null;}
+function exById(id){for(var i=0;i<cfg.ex.length;i++)if(cfg.ex[i].id===id)return cfg.ex[i];return null;}
+function catGet(name){for(var i=0;i<cfg.cats.length;i++)if(cfg.cats[i].n===name)return cfg.cats[i];return null;}
+function exGet(name){for(var i=0;i<cfg.ex.length;i++)if(cfg.ex[i].n===name)return cfg.ex[i];return null;}
+function migrateSessions(){
+if(!Array.isArray(sessions))sessions=[];
+var converted=[];
+sessions.forEach(function(s){
+if(!s||typeof s!=="object")return;
+if(s.kind){converted.push(s);return;}
+if(s.type==="Bodyweight"){converted.push({date:s.date,kind:"bw",ex:s.ex,amt:s.amt});return;}
+if(s.type==="Combat"){
+var sp=Number(s.spar)||0,total=Number(s.amt)||0;
+if(sp>0)converted.push({date:s.date,kind:"dur",cat:"Intensive training session",amt:sp});
+if(total-sp>0)converted.push({date:s.date,kind:"dur",cat:"Normal training session",amt:total-sp});
+return;}
+if(s.type==="Running"){converted.push({date:s.date,kind:"dur",cat:"Running",amt:s.amt});return;}
+if(s.act){converted.push({date:s.date,kind:"dur",cat:s.act,amt:s.amt,note:s.note||""});return;}
+converted.push({date:s.date,kind:"dur",cat:(s.lvl==="hi"?"Other — high effort":"Other — low effort"),amt:s.amt,note:s.note||""});
+});
+sessions=converted.map(function(s){
+var amount=Number(s.amt);if(!isFinite(amount)||amount<=0)amount=1;
+var base={id:(typeof s.id==="string"&&s.id)?s.id:uid("session"),date:(typeof s.date==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(s.date))?s.date:iso(new Date()),kind:s.kind==="bw"?"bw":"dur",amt:amount};
+if(base.kind==="bw"){
+var ex=exById(s.exId)||exGet(s.ex)||exGet(s.exName);
+var rate=isNum(s.rate)&&s.rate>0?s.rate:(ex?ex.p:1);
+base.exId=ex?ex.id:(s.exId||"");
+base.exName=(typeof s.exName==="string"&&s.exName)||(typeof s.ex==="string"&&s.ex)||(ex?ex.n:"Deleted exercise");
+base.rate=rate;base.points=isNum(s.points)?s.points:amount*rate;base.color=SLOTKEYS.indexOf(s.color)>=0?s.color:(ex?ex.c:"purple");
+}else{
+var cat=catById(s.catId)||catGet(s.cat)||catGet(s.catName);
+var mult=isNum(s.rate)&&s.rate>0?s.rate:(cat?cat.m:1);
+base.catId=cat?cat.id:(s.catId||"");
+base.catName=(typeof s.catName==="string"&&s.catName)||(typeof s.cat==="string"&&s.cat)||(cat?cat.n:"Deleted category");
+base.rate=mult;base.points=isNum(s.points)?s.points:amount*mult;base.color=SLOTKEYS.indexOf(s.color)>=0?s.color:(cat?cat.c:"green");
+if(typeof s.note==="string"&&s.note.trim())base.note=s.note.trim();
+}
+return base;
+});
+var used={};sessions.forEach(function(s){if(used[s.id])s.id=uid("session");used[s.id]=true;});
+}
+function saveAll(){try{localStorage.setItem(STORE,JSON.stringify(sessions));}catch(e){}}
+function saveCfg(){try{localStorage.setItem(SETSTORE,JSON.stringify(cfg));}catch(e){}}
+ensureConfig();resortCats();resortEx();migrateSessions();saveCfg();saveAll();
+function T(k){var v=L[cfg.lang][k];return (v!==undefined&&v!==null)?v:L.en[k];}
+function exName(n){var M=EXN[cfg.lang];return (M&&M[n])?M[n]:n;}
+function refIdx(){return cfg.lang==="cn"?1:(cfg.lang==="jp"?2:0);}
+function slotLabel(k){return (cfg.slots[k]&&cfg.slots[k].name)?cfg.slots[k].name:L[cfg.lang].ck[k];}
+function sessionName(s){if(s.kind==="bw"){var e=exById(s.exId);return exName(e?e.n:s.exName);}var c=catById(s.catId);return c?c.n:s.catName;}
+function pts(s){return isNum(s.points)?s.points:0;}
+function ckey(s){if(s.kind==="bw"){var e=exById(s.exId);return e?e.c:(SLOTKEYS.indexOf(s.color)>=0?s.color:"purple");}var c=catById(s.catId);return c?c.c:(SLOTKEYS.indexOf(s.color)>=0?s.color:"green");}
+function sdesc(s){if(s.kind==="bw")return sessionName(s)+" × "+s.amt;var base=sessionName(s)+" · "+s.amt+" min";if(s.note)base+=" — "+s.note;return base;}
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function parseDate(ds){var p=ds.split("-");return new Date(+p[0],+p[1]-1,+p[2]);}
+function mondayOf(d){var x=new Date(d);x.setDate(x.getDate()-((x.getDay()+6)%7));return x;}
+function roundScore(v){return Math.round(v*100)/100;}
+function dotMetrics(){
+var g=document.getElementById("grid");
+var w=(g&&g.clientWidth)?g.clientWidth:684;
+var gap=(document.documentElement.clientWidth<=560)?3:6;
+var cell=(w-gap*6)/7;
+if(cell<28)cell=28;
+var scale=Math.max(0.42,Math.min(1,cell/95));
+return {scale:scale,cap:Math.round(cell*0.8)};
+}
+function dotSize(p){
+var m=dotMetrics();
+var base=Math.round(24*m.scale*Math.sqrt(p/300));
+return Math.max(4,Math.min(Math.min(40,m.cap),base));
+}
+var resizeTimer=null;
+window.addEventListener("resize",function(){
+if(resizeTimer)clearTimeout(resizeTimer);
+resizeTimer=setTimeout(function(){render();},150);
+});
+var today=new Date();
+var tip=document.getElementById("tip");
+function tipShow(text,e){tip.textContent=text;tip.style.display="block";if(e&&typeof e.pageX==="number")tipMove(e);}
+function tipMove(e){var zoom=parseFloat(getComputedStyle(document.body).zoom)||1;var px=e.pageX/zoom,py=e.pageY/zoom;var x=px+14,y=py+14;var vw=(document.documentElement.clientWidth+window.scrollX)/zoom;if(x+tip.offsetWidth>vw-8)x=px-tip.offsetWidth-10;tip.style.left=x+"px";tip.style.top=y+"px";}
+function tipHide(){tip.style.display="none";}
+function bindTip(el,text){el.setAttribute("aria-label",text.replace(/\n/g,"; "));el.addEventListener("mouseenter",function(e){tipShow(text,e);});el.addEventListener("mousemove",tipMove);el.addEventListener("mouseleave",tipHide);el.addEventListener("focus",function(){tip.textContent=text;});el.addEventListener("blur",tipHide);}
+function clearNode(el){while(el.firstChild)el.removeChild(el.firstChild);}
+function mkSwatches(container,getCur,onPick){clearNode(container);SLOTKEYS.forEach(function(k){var s=document.createElement("span");s.className="sw"+(getCur()===k?" on":"");s.style.background=SLOTC[k];s.title=slotLabel(k);s.setAttribute("role","button");s.tabIndex=0;function pick(){onPick(k);Array.prototype.forEach.call(container.children,function(ch,i){ch.className="sw"+(SLOTKEYS[i]===getCur()?" on":"");});}s.addEventListener("click",pick);s.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();pick();}});container.appendChild(s);});}
+var viewY=today.getFullYear(),viewM=today.getMonth(),selDate=iso(today),chartMode="day",setTab="dur",panelOpen=false,aboutOpen=false;
+var newCatColor="red",newExColor="purple",editingId=null,detailColor=null,undoState=null,undoTimer=null;
+document.getElementById("fdate").value=selDate;
+function editingSession(){for(var i=0;i<sessions.length;i++)if(sessions[i].id===editingId)return sessions[i];return null;}
+function renderLangBtns(){var box=document.getElementById("langbtns");clearNode(box);LANGS.filter(function(l){return l!==cfg.lang;}).forEach(function(l){var b=document.createElement("button");b.textContent=l.toUpperCase();b.addEventListener("click",function(){cfg.lang=l;saveCfg();renderChrome();renderSettings();renderTypeSelect();renderFields();render();});box.appendChild(b);});}
+function addOption(select,value,text){var o=document.createElement("option");o.value=value;o.textContent=text;select.appendChild(o);return o;}
+function renderTypeSelect(){var ft=document.getElementById("ftype");var cur=ft.value;var es=editingSession();clearNode(ft);cfg.cats.filter(function(c){return !c.a;}).forEach(function(c){addOption(ft,"cat:"+c.id,c.n+" ("+c.m+"x)");});if(es&&es.kind==="dur"){
+var ec=catById(es.catId);var val="cat:"+es.catId;var found=false;for(var i=0;i<ft.options.length;i++)if(ft.options[i].value===val)found=true;
+if(!found)addOption(ft,val,(ec?ec.n:es.catName)+" ("+es.rate+"x"+(ec&&ec.a?", "+T("archived"):"")+")");}
+addOption(ft,"bw",T("t_bw"));var desired=es?(es.kind==="bw"?"bw":"cat:"+es.catId):cur;var ok=false;for(var j=0;j<ft.options.length;j++)if(ft.options[j].value===desired)ok=true;if(ok)ft.value=desired;}
+function renderRefTable(id,rows){var table=document.getElementById(id);clearNode(table);var ri=refIdx();rows.forEach(function(r){var tr=document.createElement("tr"),td1=document.createElement("td"),td2=document.createElement("td");td1.textContent=r[ri];td2.textContent=r[3];tr.appendChild(td1);tr.appendChild(td2);table.appendChild(tr);});}
+function updateFormMode(){var es=editingSession();document.getElementById("l_addsession").textContent=es?T("editSession"):T("addsession");document.getElementById("fadd").textContent=es?T("savechanges"):T("stickit");var cancel=document.getElementById("fcancel");cancel.textContent=T("canceledit");cancel.style.display=es?"block":"none";}
+function renderChrome(){document.body.className="lang-"+cfg.lang;document.getElementById("apptitle").textContent=T("title");document.getElementById("appsub").textContent=T("sub")+" · ";document.getElementById("aboutlink").textContent=T("learnmore");document.getElementById("aboutback").textContent=T("back");document.getElementById("aboutbody").innerHTML=T("about");document.getElementById("about").style.display=aboutOpen?"block":"none";document.getElementById("main").style.display=aboutOpen?"none":"block";renderLangBtns();var sb=document.getElementById("settingsbtn");sb.textContent=panelOpen?T("hide"):T("personalize");sb.className=panelOpen?"popen":"pclosed";document.getElementById("tabdur").textContent=T("bydur");document.getElementById("tabreps").textContent=T("byreps");document.getElementById("l_slots").textContent=T("slots");document.getElementById("l_slothint").textContent=T("slothint");document.getElementById("l_catlist").textContent=T("catlist");document.getElementById("l_cathint").textContent=T("cathint");document.getElementById("l_exlist").textContent=T("exlist");document.getElementById("l_archhint").textContent=T("archhint");document.getElementById("l_refdur").textContent=T("refdur");document.getElementById("l_refreps").textContent=T("refreps");Array.prototype.forEach.call(document.querySelectorAll(".effortnote"),function(el){el.textContent=T("effortnote");});document.getElementById("l_newmult").textContent=T("x");document.getElementById("l_newpts").textContent=T("p");document.getElementById("newcatname").placeholder=T("newname");document.getElementById("newexname").placeholder=T("newname");document.getElementById("newcatadd").textContent=T("add");document.getElementById("newexadd").textContent=T("add");updateFormMode();renderTypeSelect();document.getElementById("l_volchart").textContent=T("volchart");document.getElementById("vday").textContent=T("vday");document.getElementById("vweek").textContent=T("vweek");document.getElementById("vmonth").textContent=T("vmonth");document.getElementById("fexport").textContent=T("exportcsv");document.getElementById("freport").textContent=T("report");document.getElementById("fbackup").textContent=T("backupjson");document.getElementById("fimport").textContent=T("importjson");document.getElementById("fundobutton").textContent=T("undo");renderRefTable("refdurtable",REFDUR);renderRefTable("refrepstable",REFREPS);}
+document.getElementById("aboutlink").addEventListener("click",function(e){e.preventDefault();aboutOpen=true;renderChrome();});
+document.getElementById("aboutback").addEventListener("click",function(){aboutOpen=false;renderChrome();});
+document.getElementById("settingsbtn").addEventListener("click",function(){panelOpen=!panelOpen;document.getElementById("settings").style.display=panelOpen?"block":"none";if(aboutOpen)aboutOpen=false;renderChrome();});
+document.getElementById("tabdur").addEventListener("click",function(){setTab="dur";renderSettings();});
+document.getElementById("tabreps").addEventListener("click",function(){setTab="reps";renderSettings();});
+function renameCatObj(c,newName){newName=(newName||"").trim();if(!newName)return false;for(var j=0;j<cfg.cats.length;j++)if(cfg.cats[j]!==c&&cfg.cats[j].n===newName)return false;c.n=newName;saveCfg();return true;}
+function renameExObj(ex,newName){newName=(newName||"").trim();if(!newName)return false;for(var j=0;j<cfg.ex.length;j++)if(cfg.ex[j]!==ex&&cfg.ex[j].n===newName)return false;ex.n=newName;saveCfg();return true;}
+function actionButton(text,fn){var b=document.createElement("button");b.className="small";b.textContent=text;b.addEventListener("click",fn);return b;}
+function renderSettings(){document.getElementById("tabdur").className=setTab==="dur"?"active":"";document.getElementById("tabreps").className=setTab==="reps"?"active":"";document.getElementById("pane_dur").style.display=setTab==="dur"?"block":"none";document.getElementById("pane_reps").style.display=setTab==="reps"?"block":"none";var sr=document.getElementById("slotrows");clearNode(sr);SLOTKEYS.forEach(function(k){var row=document.createElement("div");row.className="setrow";var dot=document.createElement("span");dot.style.cssText="width:16px;height:16px;border-radius:50%;background:"+SLOTC[k]+";flex:none";row.appendChild(dot);var inp=document.createElement("input");inp.type="text";inp.value=cfg.slots[k].name||"";inp.placeholder=L[cfg.lang].ck[k];inp.addEventListener("change",function(){cfg.slots[k].name=this.value.trim();saveCfg();render();renderSettings();});row.appendChild(inp);sr.appendChild(row);});
+var cr=document.getElementById("catrows");clearNode(cr);cfg.cats.forEach(function(c){var row=document.createElement("div");row.className="setrow"+(c.a?" archived":"");var name=document.createElement("input");name.type="text";name.value=c.n;name.addEventListener("change",function(){if(!renameCatObj(c,this.value))this.value=c.n;renderChrome();render();});row.appendChild(name);if(c.a){var tag=document.createElement("span");tag.className="tag";tag.textContent=T("archived");row.appendChild(tag);}var inp=document.createElement("input");inp.type="number";inp.min="0.5";inp.step="0.5";inp.value=c.m;inp.addEventListener("change",function(){var v=parseFloat(this.value);if(v>0){c.m=v;resortCats();saveCfg();render();renderChrome();renderSettings();}else this.value=c.m;});row.appendChild(inp);var sw=document.createElement("span");sw.className="swatches";mkSwatches(sw,function(){return c.c;},function(k){c.c=k;resortCats();saveCfg();render();renderSettings();});row.appendChild(sw);row.appendChild(actionButton(c.a?T("unarchive"):T("archive"),function(){c.a=!c.a;resortCats();saveCfg();renderSettings();renderChrome();renderFields();}));row.appendChild(actionButton(T("del"),function(){if(confirm(T("confirmdel"))){var idx=cfg.cats.indexOf(c);if(idx>=0)cfg.cats.splice(idx,1);saveCfg();renderSettings();renderChrome();renderFields();render();}}));cr.appendChild(row);});
+var er=document.getElementById("exrows");clearNode(er);cfg.ex.forEach(function(ex){var row=document.createElement("div");row.className="setrow"+(ex.a?" archived":"");var name=document.createElement("input");name.type="text";name.value=exName(ex.n);name.addEventListener("change",function(){if(!renameExObj(ex,this.value))this.value=exName(ex.n);renderFields();render();});row.appendChild(name);if(ex.a){var tag=document.createElement("span");tag.className="tag";tag.textContent=T("archived");row.appendChild(tag);}var inp=document.createElement("input");inp.type="number";inp.min="0.05";inp.step="0.05";inp.value=ex.p;inp.addEventListener("change",function(){var v=parseFloat(this.value);if(v>0){ex.p=v;resortEx();saveCfg();render();renderFields();renderSettings();}else this.value=ex.p;});row.appendChild(inp);var sw=document.createElement("span");sw.className="swatches";mkSwatches(sw,function(){return ex.c;},function(k){ex.c=k;resortEx();saveCfg();render();renderSettings();});row.appendChild(sw);row.appendChild(actionButton(ex.a?T("unarchive"):T("archive"),function(){ex.a=!ex.a;resortEx();saveCfg();renderSettings();renderFields();}));row.appendChild(actionButton(T("del"),function(){if(confirm(T("confirmdel"))){var idx=cfg.ex.indexOf(ex);if(idx>=0)cfg.ex.splice(idx,1);saveCfg();renderSettings();renderFields();render();}}));er.appendChild(row);});mkSwatches(document.getElementById("newcatsw"),function(){return newCatColor;},function(k){newCatColor=k;});mkSwatches(document.getElementById("newexsw"),function(){return newExColor;},function(k){newExColor=k;});}
+document.getElementById("newcatadd").addEventListener("click",function(){var n=(document.getElementById("newcatname").value||"").trim(),m=parseFloat(document.getElementById("newcatmult").value);if(!n||!m||m<=0)return;for(var i=0;i<cfg.cats.length;i++)if(cfg.cats[i].n===n){alert(T("err_dupname"));return;}cfg.cats.push({id:uid("cat"),n:n,m:m,a:false,c:newCatColor,o:nextOrder(cfg.cats)});resortCats();saveCfg();document.getElementById("newcatname").value="";document.getElementById("newcatmult").value="";renderSettings();renderChrome();renderFields();});
+document.getElementById("newexadd").addEventListener("click",function(){var n=(document.getElementById("newexname").value||"").trim(),p=parseFloat(document.getElementById("newexpts").value);if(!n||!p||p<=0)return;for(var i=0;i<cfg.ex.length;i++)if(cfg.ex[i].n===n){alert(T("err_dupname"));return;}cfg.ex.push({id:uid("ex"),n:n,p:p,a:false,c:newExColor,o:nextOrder(cfg.ex)});resortEx();saveCfg();document.getElementById("newexname").value="";document.getElementById("newexpts").value="";renderSettings();renderFields();});
+function renderFields(){var t=document.getElementById("ftype").value,f=document.getElementById("fields"),es=editingSession();clearNode(f);var row=document.createElement("div");row.className="row";if(t==="bw"){var select=document.createElement("select");select.id="fex";select.style.flex="1.6";cfg.ex.filter(function(e){return !e.a;}).forEach(function(e){addOption(select,e.id,exName(e.n)+" ("+e.p+" "+T("p")+"/"+T("perrep")+")");});if(es&&es.kind==="bw"){var ee=exById(es.exId),found=false;for(var i=0;i<select.options.length;i++)if(select.options[i].value===es.exId)found=true;if(!found)addOption(select,es.exId,(ee?exName(ee.n):exName(es.exName))+" ("+es.rate+" "+T("p")+"/"+T("perrep")+")");}var amt=document.createElement("input");amt.type="number";amt.id="famt";amt.min="1";amt.placeholder=T("ph_reps");row.appendChild(select);row.appendChild(amt);}else{var amt2=document.createElement("input");amt2.type="number";amt2.id="famt";amt2.min="1";amt2.placeholder=T("ph_time");var note=document.createElement("input");note.type="text";note.id="fnote";note.placeholder=T("ph_noteopt");row.appendChild(amt2);row.appendChild(note);}f.appendChild(row);}
+document.getElementById("ftype").addEventListener("change",function(){renderFields();});
+function startEdit(id){editingId=id;var s=editingSession();if(!s)return;document.getElementById("fdate").value=s.date;renderTypeSelect();document.getElementById("ftype").value=s.kind==="bw"?"bw":"cat:"+s.catId;renderFields();if(s.kind==="bw")document.getElementById("fex").value=s.exId;document.getElementById("famt").value=s.amt;if(s.kind==="dur"&&document.getElementById("fnote"))document.getElementById("fnote").value=s.note||"";updateFormMode();document.getElementById("addcard").scrollIntoView({behavior:"smooth",block:"start"});}
+function cancelEdit(){editingId=null;renderTypeSelect();renderFields();document.getElementById("fdate").value=selDate;updateFormMode();document.getElementById("ferr").textContent="";}
+document.getElementById("fcancel").addEventListener("click",cancelEdit);
+function buildSessionFromForm(){var err=document.getElementById("ferr");err.textContent="";var t=document.getElementById("ftype").value,d=document.getElementById("fdate").value,el=document.getElementById("famt"),a=el?parseFloat(el.value):NaN,old=editingSession();if(!t){err.textContent=T("err_nocat");return null;}if(!d||!a||a<=0){err.textContent=T("err_amt");return null;}var s={id:old?old.id:uid("session"),date:d,amt:a};if(t==="bw"){s.kind="bw";var exid=document.getElementById("fex")?document.getElementById("fex").value:"",ex=exById(exid);if(!ex&&!(old&&old.kind==="bw"&&old.exId===exid)){err.textContent=T("err_noex");return null;}s.exId=exid;s.exName=ex?ex.n:old.exName;s.rate=ex?ex.p:old.rate;s.color=ex?ex.c:old.color;s.points=a*s.rate;}else{s.kind="dur";var catid=t.slice(4),cat=catById(catid);if(!cat&&!(old&&old.kind==="dur"&&old.catId===catid)){err.textContent=T("err_nocat");return null;}s.catId=catid;s.catName=cat?cat.n:old.catName;s.rate=cat?cat.m:old.rate;s.color=cat?cat.c:old.color;s.points=a*s.rate;var note=(document.getElementById("fnote").value||"").trim();if(note)s.note=note;}return s;}
+function renderChart(){["vday","vweek","vmonth"].forEach(function(id){document.getElementById(id).className=(id==="v"+chartMode)?"active":"";});var buckets=[];if(chartMode==="day"){for(var i=29;i>=0;i--){var d=new Date(today);d.setDate(d.getDate()-i);buckets.push({key:iso(d),label:(d.getDate()%5===0||d.getDate()===1)?String(d.getDate()):""});}}else if(chartMode==="week"){var mon=mondayOf(today);for(var j=20;j>=0;j--){var w=new Date(mon);w.setDate(w.getDate()-7*j);buckets.push({key:"W"+iso(w),start:new Date(w),label:(j%4===0)?((w.getMonth()+1)+"/"+w.getDate()):""});}}else{for(var k=11;k>=0;k--){var m=new Date(today.getFullYear(),today.getMonth()-k,1);buckets.push({key:m.getFullYear()+"-"+String(m.getMonth()+1).padStart(2,"0"),label:L[cfg.lang].mshort[m.getMonth()]});}}var idx={};buckets.forEach(function(b,i){idx[b.key]=i;});var data=buckets.map(function(){var o={};SLOTKEYS.forEach(function(k){o[k]=0;});return o;});sessions.forEach(function(s){var d=parseDate(s.date),key;if(chartMode==="day")key=s.date;else if(chartMode==="week")key="W"+iso(mondayOf(d));else key=s.date.slice(0,7);if(idx[key]!==undefined)data[idx[key]][ckey(s)]+=pts(s);});var maxT=1;data.forEach(function(o){var t=0;SLOTKEYS.forEach(function(k){t+=o[k];});if(t>maxT)maxT=t;});document.getElementById("chartmax").textContent=T("tallest")+roundScore(maxT)+" "+T("pts");var bars=document.getElementById("bars");clearNode(bars);var H=(document.documentElement.clientWidth<=560)?110:160;data.forEach(function(o,i){var bar=document.createElement("div");bar.className="bar";bar.tabIndex=0;bar.setAttribute("role","img");var tot=0,parts=[];SLOTKEYS.forEach(function(k){if(o[k]>0){tot+=o[k];parts.push(slotLabel(k)+" · "+roundScore(o[k])+" "+T("pts"));}});var head=(chartMode==="week"?(T("weekof")+iso(buckets[i].start)):buckets[i].key)+" — "+roundScore(tot)+" "+T("pts")+" "+T("total"),tt=parts.length?(head+"\n"+parts.join("\n")):head;bindTip(bar,tt);SLOTKEYS.slice().reverse().forEach(function(k){if(o[k]>0){var seg=document.createElement("div"),h=Math.max(2,o[k]/maxT*H);seg.style.height=h+"px";seg.style.background=SLOTC[k];bar.appendChild(seg);}});bars.appendChild(bar);});var xl=document.getElementById("xlabels");clearNode(xl);buckets.forEach(function(b){var sp=document.createElement("span");sp.textContent=b.label;xl.appendChild(sp);});}
+document.getElementById("vday").addEventListener("click",function(){chartMode="day";renderChart();});document.getElementById("vweek").addEventListener("click",function(){chartMode="week";renderChart();});document.getElementById("vmonth").addEventListener("click",function(){chartMode="month";renderChart();});
+function selectDay(ds,color){selDate=ds;detailColor=color||null;document.getElementById("fdate").value=selDate;render();}
+function keyboardActivate(el,fn){el.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();e.stopPropagation();fn();}});}
+function showUndo(removed,index){undoState={session:removed,index:index};var box=document.getElementById("undo");document.getElementById("undotext").textContent=T("deleted")+": "+sdesc(removed);box.style.display="flex";if(undoTimer)clearTimeout(undoTimer);undoTimer=setTimeout(function(){undoState=null;box.style.display="none";},7000);}
+document.getElementById("fundobutton").addEventListener("click",function(){if(!undoState)return;sessions.splice(Math.min(undoState.index,sessions.length),0,undoState.session);saveAll();undoState=null;document.getElementById("undo").style.display="none";if(undoTimer)clearTimeout(undoTimer);render();});
+function deleteSession(id){for(var i=0;i<sessions.length;i++)if(sessions[i].id===id){var removed=sessions.splice(i,1)[0];if(editingId===id)cancelEdit();saveAll();showUndo(removed,i);render();return;}}
+function render(){var mt=document.getElementById("mtitle");if(cfg.lang==="en")mt.textContent=["January","February","March","April","May","June","July","August","September","October","November","December"][viewM]+" "+viewY;else mt.textContent=viewY+"年"+(viewM+1)+"月";var g=document.getElementById("grid");clearNode(g);L[cfg.lang].wd.forEach(function(w){var h=document.createElement("div");h.className="wd";h.textContent=w;g.appendChild(h);});var off=(new Date(viewY,viewM,1).getDay()+6)%7,nD=new Date(viewY,viewM+1,0).getDate(),ms=sessions.filter(function(s){var p=s.date.split("-");return +p[0]===viewY&&+p[1]===viewM+1;}),agg={},totP=0;ms.forEach(function(s){var k=s.date+"|"+ckey(s);if(!agg[k])agg[k]={p:0,items:[]};agg[k].p+=pts(s);agg[k].items.push(sdesc(s));totP+=pts(s);});for(var i=0;i<off;i++)g.appendChild(document.createElement("div"));for(var d=1;d<=nD;d++){(function(){var ds=viewY+"-"+String(viewM+1).padStart(2,"0")+"-"+String(d).padStart(2,"0"),cell=document.createElement("div");cell.className="cell"+(ds===selDate?" sel":"");cell.dataset.ds=ds;cell.setAttribute("role","button");cell.tabIndex=0;cell.setAttribute("aria-label",ds);var num=document.createElement("div");num.className="dnum"+(ds===iso(today)?" today":"");num.textContent=d;cell.appendChild(num);var dots=document.createElement("div");dots.className="dots";SLOTKEYS.forEach(function(t){var key=ds+"|"+t;if(agg[key]){var dot=document.createElement("span"),sz=dotSize(agg[key].p),tt=slotLabel(t)+" — "+roundScore(agg[key].p)+" "+T("pts")+"\n"+agg[key].items.join("\n");dot.className="dot";dot.style.width=sz+"px";dot.style.height=sz+"px";dot.style.background=SLOTC[t];dot.setAttribute("role","button");dot.tabIndex=0;bindTip(dot,tt);function choose(e){if(e)e.stopPropagation();selectDay(ds,t);}dot.addEventListener("click",choose);keyboardActivate(dot,function(){selectDay(ds,t);});dots.appendChild(dot);}});cell.appendChild(dots);cell.addEventListener("click",function(){selectDay(ds,null);});keyboardActivate(cell,function(){selectDay(ds,null);});g.appendChild(cell);})();}
+var lg=document.getElementById("legend");clearNode(lg);SLOTKEYS.forEach(function(t){var c=document.createElement("span");c.className="chip";var dot=document.createElement("i");dot.style.background=SLOTC[t];var text=document.createTextNode(slotLabel(t));c.appendChild(dot);c.appendChild(text);lg.appendChild(c);});document.getElementById("mtotal").textContent=T("monthtotal")+roundScore(totP)+" "+T("pts");var dl=document.getElementById("daylist");clearNode(dl);var td=sessions.filter(function(s){return s.date===selDate;});var head=document.createElement("p");head.className="muted";head.textContent=selDate+(td.length?"":T("noent"));dl.appendChild(head);if(detailColor){var filter=document.createElement("div");filter.className="detailfilter";var label=document.createElement("span");label.textContent=T("filtered")+": "+slotLabel(detailColor);var all=document.createElement("button");all.textContent=T("showall");all.addEventListener("click",function(){detailColor=null;render();});filter.appendChild(label);filter.appendChild(all);dl.appendChild(filter);td=td.filter(function(s){return ckey(s)===detailColor;});}td.forEach(function(s){var row=document.createElement("div");row.className="entry";var dot=document.createElement("i");dot.style.background=SLOTC[ckey(s)];var text=document.createElement("span");text.style.flex="1";text.style.minWidth="0";text.textContent=sdesc(s)+" · "+roundScore(pts(s))+" "+T("pts");var actions=document.createElement("span");actions.className="entryactions";var edit=document.createElement("button");edit.textContent=T("edit");edit.setAttribute("aria-label",T("edit")+" "+sdesc(s));edit.addEventListener("click",function(){startEdit(s.id);});var del=document.createElement("button");del.textContent="✕";del.setAttribute("aria-label",T("del")+" "+sdesc(s));del.addEventListener("click",function(){deleteSession(s.id);});actions.appendChild(edit);actions.appendChild(del);row.appendChild(dot);row.appendChild(text);row.appendChild(actions);dl.appendChild(row);});renderChart();}
+document.getElementById("prev").addEventListener("click",function(){viewM--;if(viewM<0){viewM=11;viewY--;}render();});document.getElementById("next").addEventListener("click",function(){viewM++;if(viewM>11){viewM=0;viewY++;}render();});
+document.getElementById("fadd").addEventListener("click",function(){var s=buildSessionFromForm();if(!s)return;if(editingId){for(var i=0;i<sessions.length;i++)if(sessions[i].id===editingId){sessions[i]=s;break;}}else sessions.push(s);saveAll();selDate=s.date;detailColor=null;var p=s.date.split("-");viewY=+p[0];viewM=+p[1]-1;editingId=null;renderTypeSelect();renderFields();document.getElementById("fdate").value=selDate;updateFormMode();render();});
+function csvSafe(v){var s=String(v===undefined||v===null?"":v);if(/^[=+\-@]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';}
+function downloadBlob(content,type,fname){var blob=new Blob([content],{type:type}),a=document.createElement("a"),url=URL.createObjectURL(blob);a.href=url;a.download=fname;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url);},1000);}
+function dlCSV(rows,fname){var csv=rows.map(function(r){return r.map(csvSafe).join(",");}).join("\n");downloadBlob("\ufeff"+csv,"text/csv;charset=utf-8",fname);}
+document.getElementById("fexport").addEventListener("click",function(){var rows=[["date","kind","detail","amount","saved_rate","points"]];sessions.forEach(function(s){rows.push([s.date,s.kind==="bw"?"bodyweight":"duration",sdesc(s),s.amt,s.rate,roundScore(pts(s))]);});dlCSV(rows,"training_log.csv");});
+document.getElementById("freport").addEventListener("click",function(){var rows=[["date","type","item_id","name","amount","unit","saved_rate","saved_points","note"]],sorted=sessions.slice().sort(function(a,b){return a.date<b.date?-1:(a.date>b.date?1:0);});sorted.forEach(function(s){rows.push([s.date,s.kind==="bw"?"bodyweight":"duration",s.kind==="bw"?s.exId:s.catId,sessionName(s),s.amt,s.kind==="bw"?"reps":"min",s.rate,roundScore(pts(s)),s.note||""]);});dlCSV(rows,"training_report.csv");});
+document.getElementById("fbackup").addEventListener("click",function(){var backup={app:"training-calendar",version:BACKUP_VERSION,exportedAt:new Date().toISOString(),settings:cfg,sessions:sessions};downloadBlob(JSON.stringify(backup,null,2),"application/json","training_calendar_backup_"+iso(new Date())+".json");document.getElementById("backupstatus").textContent=T("backupjson")+" ✓";});
+document.getElementById("fimport").addEventListener("click",function(){document.getElementById("fimportfile").click();});
+document.getElementById("fimportfile").addEventListener("change",function(){var file=this.files&&this.files[0],input=this;if(!file)return;var reader=new FileReader();reader.onload=function(){try{var data=JSON.parse(reader.result),newCfg=data.settings||data.cfg,newSessions=data.sessions;if(!data||data.app!=="training-calendar"||!newCfg||!Array.isArray(newSessions))throw new Error("invalid");if(!confirm(T("confirmimport")))return;cfg=clone(newCfg);sessions=clone(newSessions);ensureConfig();resortCats();resortEx();migrateSessions();saveCfg();saveAll();editingId=null;detailColor=null;panelOpen=false;aboutOpen=false;document.getElementById("settings").style.display="none";renderChrome();renderSettings();renderFields();render();document.getElementById("backupstatus").textContent=T("importok");}catch(e){document.getElementById("backupstatus").textContent=T("importerr");}finally{input.value="";}};reader.onerror=function(){document.getElementById("backupstatus").textContent=T("importerr");input.value="";};reader.readAsText(file);});
+renderChrome();renderSettings();renderFields();render();
+</script>
+</body>
+</html>
